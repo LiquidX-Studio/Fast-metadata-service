@@ -1,3 +1,5 @@
+"""Metadata router module contains endpoints related to metadata"""
+
 from fastapi import APIRouter, Path
 from fastapi.responses import JSONResponse
 

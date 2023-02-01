@@ -1,3 +1,6 @@
+"""Metadata controller module contains all logic related to metadata.
+It will be the logic behind the metadata endpoint"""
+
 import json
 import logging
 import os
