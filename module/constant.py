@@ -1,3 +1,5 @@
+"""Constant variables that will be used throughout the program"""
+
 import uuid
 from contextvars import ContextVar
 from enum import Enum

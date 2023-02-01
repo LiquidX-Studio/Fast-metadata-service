@@ -1,9 +1,14 @@
+"""Logger module is used for logging purpose. The code is taken from:
+https://dddinpython.com/index.php/2021/09/02/request-logging-how-to/ as
+an attempt to create a traceable log in Python using correlation ID.
+
+"""
+
 import logging
 
 from module.constant import CORRELATION_ID
 
 
-# Taking example from https://dddinpython.com/index.php/2021/09/02/request-logging-how-to/
 class ContextFilter(logging.Filter):
     def filter(self, record):
         record.correlation_id = CORRELATION_ID.get()
