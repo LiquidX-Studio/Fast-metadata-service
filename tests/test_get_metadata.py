@@ -18,9 +18,13 @@ class TestGetMetadataEndpoint(unittest.TestCase):
             with open(file_path, "rb") as metadata_file:
                 self.assertEqual(response.read(), metadata_file.read().strip())
 
-    def test_get_metadata_invalid_format(self):
+    def test_get_metadata_non_exist_metadata_file(self):
+        response = self.client.get(f"/metadata/5")
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+
+    def test_get_metadata_invalid_json_format(self):
         response = self.client.get(f"/metadata/4")
-        self.assertEqual(response.status_code, HTTPStatus.INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
     def test_get_metadata_beyond_token_id_range(self):
         for token in [0, int(Env.MAX_TOKEN_ID) + 1]:

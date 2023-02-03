@@ -1,8 +1,9 @@
 """Metadata controller module contains all logic related to metadata.
-It will be the logic behind the metadata endpoint"""
+It will be the logic behind the metadata endpoint
+
+"""
 
 import json
-import logging
 import os
 from http import HTTPStatus
 
@@ -10,16 +11,21 @@ from pydantic import ValidationError
 
 from config import storage
 from module.env import Env
+from module.logger import logger
 from module.schema.metadata import Metadata
 
 
-async def get(token: int, logger: logging.Logger):
+async def get(token: int):
     path = os.path.join(Env.METADATA_FOLDER, f"{token}.json")
     logger.info("Load metadata for token ID %s from path %s", token, path)
-    metadata = await storage.get(path)
+    response, status = await storage.get(path)
+
+    if status != HTTPStatus.OK:
+        return response, status
+
     try:
-        Metadata.parse_raw(metadata)
+        Metadata.parse_raw(response)
     except ValidationError as err:
         logger.error("Invalid metadata format. Error: %s", str(err.errors()))
-        return json.loads(err.json()), HTTPStatus.INTERNAL_SERVER_ERROR
-    return json.loads(metadata.decode("utf-8")), HTTPStatus.OK
+        return json.loads(err.json()), HTTPStatus.BAD_REQUEST
+    return json.loads(response.decode("utf-8")), HTTPStatus.OK

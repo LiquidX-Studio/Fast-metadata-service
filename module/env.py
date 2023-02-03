@@ -1,5 +1,7 @@
 """A list of available environment variables that's used for configuration.
-Any environment variable should be stored here, so it's easy to keep track of it."""
+Any environment variable should be stored here, so it's easy to keep track of it.
+
+"""
 
 import os
 from enum import Enum, auto

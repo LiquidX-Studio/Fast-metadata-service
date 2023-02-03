@@ -17,6 +17,16 @@ class StorageInterface(metaclass=abc.ABCMeta):  # pragma: no cover
     """
 
     @abc.abstractmethod
-    async def get(self) -> bytes:
+    async def get(self):
         """Abstract method to get file from a storage"""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def put(self):
+        """Abstract method to store file in a storage"""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def is_exists(self):
+        """Abstract method to check if file exists in a storage"""
         raise NotImplementedError

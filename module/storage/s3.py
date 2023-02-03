@@ -1,13 +1,16 @@
 """This module is used to interact with AWS S3 bucket"""
 
 import logging
+from http import HTTPStatus
+from typing import Union
 
 import aioboto3
 import botocore.exceptions
 from pydantic import validate_arguments
 
 from module.env import Env
-from module.storage.interface import StorageInterface
+from module.response import Response
+from module.storage.storage_interface import StorageInterface
 
 
 class S3Storage(StorageInterface):
@@ -31,15 +34,14 @@ class S3Storage(StorageInterface):
         self.logger = logger
 
     @validate_arguments
-    async def get(self, path: str):
+    async def get(self, path: str, **kwargs) -> Union[tuple[bytes, HTTPStatus], Response]:
         """Get file from S3 bucket
 
         Args:
             path (str): Path to file
 
         Returns:
-            bytes: File content in bytes
-            None: File not found or error occured
+            Union[tuple[bytes, HTTPStatus], Response]: Response data and HTTP status
 
         """
 
@@ -52,10 +54,88 @@ class S3Storage(StorageInterface):
                 self.logger.info("Load file %s from bucket %s", path, bucket)
                 file = await s3.get_object(Bucket=bucket, Key=path)
                 if file is not None:
-                    return await file["Body"].read()
-            except botocore.exceptions.ParamValidationError as e:
-                self.logger.error("Invalid parameter added when loading from S3 bucket. Error: %s", str(e))
-            except botocore.exceptions.ClientError as e:
-                self.logger.error("Failed to load file from S3 bucket. Error: %s", str(e))
-            except Exception as e:
-                self.logger.error("Failed to run operation on S3 bucket. Error: %s", str(e))
+                    return await file["Body"].read(), HTTPStatus.OK
+            except botocore.exceptions.ParamValidationError as err:
+                self.logger.error("Invalid parameter added when loading from S3 bucket. Error: %s", str(err))
+            except botocore.exceptions.ClientError as err:
+                self.logger.error("Failed to load file from S3 bucket. Error: %s", str(err))
+                if "NoSuchKey" in str(err):
+                    return Response.NOT_FOUND
+            except Exception as err:
+                self.logger.error("Failed to run operation on S3 bucket. Error: %s", str(err))
+            return Response.STORAGE_OPERATION_FAIL
+
+    @validate_arguments
+    async def put(self, path: str, content: bytes, overwrite=False, **kwargs) -> Response:
+        """Put file to S3 bucket
+
+        Args:
+            path (str): Path to file
+            content (bytes): File content in bytes
+            overwrite (bool, optional): Overwrite file if exists. Defaults to False
+
+        Returns:
+            dict: Response data
+            HTTPStatus: HTTP response code
+
+        """
+
+        session = aioboto3.Session()
+        bucket = Env.S3_BUCKET_NAME.value
+
+        if not overwrite:
+            response, status = await self.is_exists(path)
+            if response:
+                self.logger.warning("Abort overwriting file %s since it exists in bucket %s", path, bucket)
+            if status != HTTPStatus.NOT_FOUND:
+                return response, status
+
+        async with session.client(self.S3,
+                                  aws_access_key_id=self.access_key,
+                                  aws_secret_access_key=self.secret_key) as s3:
+            try:
+                self.logger.info("Save file %s to bucket %s", path, bucket)
+                await s3.put_object(Bucket=bucket, Key=path, Body=content)
+                return Response.OK
+            except botocore.exceptions.ParamValidationError as err:
+                self.logger.error("Invalid parameter added when saving to S3 bucket. Error: %s", str(err))
+            except botocore.exceptions.ClientError as err:
+                self.logger.error("Failed to save file to S3 bucket. Error: %s", str(err))
+            except Exception as err:
+                self.logger.error("Failed to run operation on S3 bucket. Error: %s", str(err))
+            return Response.STORAGE_OPERATION_FAIL
+
+    @validate_arguments
+    async def is_exists(self,
+                        path: str,
+                        **kwargs) -> Union[tuple[bool, HTTPStatus], Response]:
+        """Check if file exists in S3 bucket
+
+        Args:
+            path (str): Path to file
+            **kwargs: Arbitrary keyword arguments
+
+        Returns:
+            Union[tuple[bool, HTTPStatus], Response]: Response data and HTTP status
+
+        """
+
+        session = aioboto3.Session()
+        bucket = Env.S3_BUCKET_NAME.value
+        async with session.client(self.S3,
+                                  aws_access_key_id=self.access_key,
+                                  aws_secret_access_key=self.secret_key) as s3:
+            try:
+                self.logger.info("Check whether file %s exists in bucket %s", path, bucket)
+                await s3.head_object(Bucket=bucket, Key=path)
+                return True, HTTPStatus.OK
+            except botocore.exceptions.ParamValidationError as err:
+                self.logger.error("Invalid parameter added when accessing S3 bucket. Error: %s", str(err))
+            except botocore.exceptions.ClientError as err:
+                if "error occurred (404)" in str(err):
+                    self.logger.warning("File %s in bucket %s not found. Error: %s", path, bucket, str(err))
+                    return False, HTTPStatus.NOT_FOUND
+                self.logger.error("Failed to check file in S3 bucket. Error: %s", str(err))
+            except Exception as err:
+                self.logger.error("Failed to run operation on S3 bucket. Error: %s", str(err))
+        return Response.STORAGE_OPERATION_FAIL
