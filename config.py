@@ -1,7 +1,12 @@
 from module.env import Env
 from module.logger import logger
+from module.schema.storage import StorageType
+from module.storage.local import LocalStorage
 from module.storage.main import Storage
+from module.storage.s3 import S3Storage
 
+Storage.register(StorageType.S3, S3Storage)
+Storage.register(StorageType.Local, LocalStorage)
 storage = Storage(logger=logger,
                   storage=Env.STORAGE_TYPE,
                   config={

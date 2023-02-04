@@ -72,6 +72,11 @@ class TestStorageLocal(unittest.TestCase):
         self.assertDictEqual(expected_response, response)
         self.assertEqual(status, expected_status)
 
+    def test_prevent_overwrite_file(self):
+        metadata = os.path.join(METADATA_DIR, "4.json")
+        response = asyncio.run(self.storage.put(metadata, b"test"))
+        self.assertEqual(response, Response.FILE_EXISTS)
+
     def test_write_file_to_directory(self):
         response, status = asyncio.run(self.storage.put(METADATA_DIR, b"test"))
         expected_response, expected_status = Response.STORAGE_OPERATION_FAIL

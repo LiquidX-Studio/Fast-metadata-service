@@ -26,13 +26,13 @@ from pydantic import validate_arguments
 
 from module.response import Response
 from module.schema.storage import StorageType, Configuration
-from module.storage.local import LocalStorage
-from module.storage.s3 import S3Storage
 from module.storage.storage_interface import StorageInterface
 
 
 class Storage(StorageInterface):
     """Main storage class that aggregates all storage class"""
+
+    storage_class: dict[StorageType, StorageInterface] = {}
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(self, logger: logging.Logger, storage: StorageType, config: Configuration = {}, **kwargs):
@@ -47,10 +47,7 @@ class Storage(StorageInterface):
 
         """
 
-        if storage == StorageType.S3:
-            self.storage = S3Storage(logger, config)
-        elif storage == StorageType.Local:
-            self.storage = LocalStorage(logger)
+        self.storage = self.storage_class[storage](logger=logger, config=config, **kwargs)
 
     @validate_arguments
     async def get(self, path: str, **kwargs) -> Union[tuple[bytes, HTTPStatus], Response]:
@@ -94,3 +91,16 @@ class Storage(StorageInterface):
 
         """
         return await self.storage.is_exists(path, **kwargs)
+
+    @classmethod
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def register(cls, storage_name: StorageType, storage_class) -> None:
+        """Method to register a storage class
+
+        Args:
+            storage_name (StorageType): Storage type
+            storage_class: Inheritance of StorageInterface class
+
+        """
+
+        cls.storage_class[storage_name] = storage_class
