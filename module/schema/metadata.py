@@ -7,14 +7,14 @@ https://docs.opensea.io/docs/metadata-standards#metadata-structure
 
 from typing import Optional, Union
 
-from pydantic import BaseModel, AnyUrl, constr
+from pydantic import BaseModel, AnyUrl, constr, StrictBool, StrictFloat, StrictInt
 
 
 class Attribute(BaseModel):
     """Schema for metadata attribute"""
 
     trait_type: str
-    value: Union[bool, str, int, float]
+    value: Union[StrictBool, StrictInt, StrictFloat, str]
     display_type: Optional[str]
 
 
@@ -30,3 +30,12 @@ class Metadata(BaseModel):
 
     class Config:
         extra = "allow"
+
+class MetadataRequestBody(Metadata):
+    """Schema for metadata request body. It inherits
+    from Metadata schema and makes all fields optional.
+
+    """
+
+    name: Optional[constr(min_length=1, strip_whitespace=True)]
+    image_url: Optional[AnyUrl]

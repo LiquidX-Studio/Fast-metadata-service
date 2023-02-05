@@ -1,3 +1,4 @@
+PyJWT
 aioboto3==10.3.0
 aiofiles==22.1.0
 fastapi==0.89.1

@@ -1,37 +1,34 @@
+import asyncio
+import json
 import os
 import unittest
 from http import HTTPStatus
+from unittest.mock import patch
 
-from fastapi.testclient import TestClient
-
-from main import app
+from module.utils import get_metadata
 from module.env import Env
+from module.response import Response
+from tests.constant import METADATA_DIR
 
 
-class TestGetMetadataEndpoint(unittest.TestCase):
-    client = TestClient(app)
+class TestGetMetadata(unittest.TestCase):
+
+    @patch.object(Env, 'METADATA_FOLDER')
+    def setUp(self, mock_folder) -> None:
+        mock_folder.return_value = METADATA_DIR
 
     def test_get_metadata(self):
-        for token in range(1, 4):
-            response = self.client.get(f"/metadata/{token}")
-            file_path = os.path.join(Env.METADATA_FOLDER, f"{token}.json")
-            with open(file_path, "rb") as metadata_file:
-                self.assertEqual(response.read(), metadata_file.read().strip())
+        response, status = asyncio.run(get_metadata(2))
+        file_path = os.path.join(Env.METADATA_FOLDER, "2.json")
+        with open(file_path) as metadata_file:
+            metadata = json.loads(metadata_file.read())
+            self.assertDictEqual(metadata, response)
+            self.assertEqual(status, HTTPStatus.OK)
 
-    def test_get_metadata_non_exist_metadata_file(self):
-        response = self.client.get(f"/metadata/5")
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+    def test_get_metadata_not_found(self):
+        response = asyncio.run(get_metadata(3749210))
+        self.assertEqual(response, Response.NOT_FOUND)
 
-    def test_get_metadata_invalid_json_format(self):
-        response = self.client.get(f"/metadata/4")
-        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-
-    def test_get_metadata_beyond_token_id_range(self):
-        for token in [0, int(Env.MAX_TOKEN_ID) + 1]:
-            response = self.client.get(f"/metadata/{token}")
-            self.assertEqual(response.status_code, HTTPStatus.UNPROCESSABLE_ENTITY)
-
-    def test_get_metadata_with_invalid_token_format(self):
-        for token in ["legawa", 2.0, False]:
-            response = self.client.get(f"/metadata/{token}")
-            self.assertEqual(response.status_code, HTTPStatus.UNPROCESSABLE_ENTITY)
+    def test_get_invalid_metadata_format(self):
+        _, status = asyncio.run(get_metadata(4))
+        self.assertEqual(status, HTTPStatus.BAD_REQUEST)

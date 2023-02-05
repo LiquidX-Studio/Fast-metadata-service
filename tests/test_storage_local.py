@@ -1,5 +1,6 @@
 import asyncio
 import os
+import shutil
 import stat
 import unittest
 from http import HTTPStatus
@@ -60,17 +61,16 @@ class TestStorageLocal(unittest.TestCase):
         metadata = os.path.join(METADATA_DIR, "1.json")
         with open(metadata, "rb") as file:
             metadata = metadata.replace("1.json", "test.json")
-            response, status = asyncio.run(self.storage.put(metadata, file.read()))
+            response = asyncio.run(self.storage.put(metadata, file.read()))
 
-        self.assertEqual(response, {"status": "success"})
-        self.assertEqual(status, HTTPStatus.OK)
+        self.assertEqual(response, Response.OK)
         os.unlink(metadata)
 
     def test_write_file_nonexist_directory(self):
-        response, status = asyncio.run(self.storage.put("path/to/nonexist/directory/file.json", b"test"))
-        expected_response, expected_status = Response.STORAGE_OPERATION_FAIL
-        self.assertDictEqual(expected_response, response)
-        self.assertEqual(status, expected_status)
+        file_path = os.path.join(METADATA_DIR, "path/to/nonexist/directory/file.json")
+        response = asyncio.run(self.storage.put(file_path, b"test"))
+        shutil.rmtree(os.path.join(METADATA_DIR, "path"))
+        self.assertEqual(response, Response.OK)
 
     def test_prevent_overwrite_file(self):
         metadata = os.path.join(METADATA_DIR, "4.json")

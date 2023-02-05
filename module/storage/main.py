@@ -20,7 +20,7 @@ within the project directory.
 
 import logging
 from http import HTTPStatus
-from typing import Union
+from typing import Union, Optional
 
 from pydantic import validate_arguments
 
@@ -35,7 +35,7 @@ class Storage(StorageInterface):
     storage_class: dict[StorageType, StorageInterface] = {}
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
-    def __init__(self, logger: logging.Logger, storage: StorageType, config: Configuration = {}, **kwargs):
+    def __init__(self, logger: logging.Logger, storage: StorageType, config: Optional[Configuration] = {}, **kwargs):
         """Initializes the storage class. It will return respective
         storage class.
 
@@ -63,12 +63,13 @@ class Storage(StorageInterface):
         return await self.storage.get(path, **kwargs)
 
     @validate_arguments
-    async def put(self, path: str, data: bytes, **kwargs) -> Response:
+    async def put(self, path: str, data: bytes, overwrite=False, **kwargs) -> Response:
         """Method to put file to a storage
 
         Args:
             path (str): File path
             data (bytes): File data
+            overwrite (bool, optional): Overwrite file. Defaults to False
             **kwargs: Arbitrary keyword arguments.
 
         Returns:
@@ -76,7 +77,7 @@ class Storage(StorageInterface):
             HTTPStatus: HTTP status code
 
         """
-        return await self.storage.put(path, data, **kwargs)
+        return await self.storage.put(path, data, overwrite, **kwargs)
 
     @validate_arguments
     async def is_exists(self, path: str, **kwargs) -> Union[tuple[bool, HTTPStatus], Response]:

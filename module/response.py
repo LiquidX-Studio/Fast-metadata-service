@@ -9,16 +9,19 @@ from enum import Enum
 from http import HTTPStatus
 
 
-def _error(message: str, status_code: HTTPStatus) -> (dict, HTTPStatus):
-    return {"error": message}, status_code
-
-
-def _status(message: str, status_code: HTTPStatus) -> (dict, HTTPStatus):
-    return {"status": message}, status_code
+def _message(message: str, status_code: HTTPStatus) -> (dict, HTTPStatus):
+    return {"detail": message}, status_code
 
 
 class Response(tuple, Enum):
-    FILE_EXISTS = _error("file already exists", HTTPStatus.CONFLICT)
-    NOT_FOUND = _error("not found", HTTPStatus.NOT_FOUND)
-    OK = _status("success", HTTPStatus.OK)
-    STORAGE_OPERATION_FAIL = _error("fail to run operation on storage", HTTPStatus.INTERNAL_SERVER_ERROR)
+    """Customized HTTP response template that follows
+    FastAPI response pattern
+
+    """
+
+    FILE_EXISTS = _message("file already exists", HTTPStatus.CONFLICT)
+    INVALID_TOKEN = _message("invalid token", HTTPStatus.UNAUTHORIZED)
+    NOT_FOUND = _message("not found", HTTPStatus.NOT_FOUND)
+    OK = _message("success", HTTPStatus.OK)
+    STORAGE_OPERATION_FAIL = _message("fail to run operation on storage", HTTPStatus.INTERNAL_SERVER_ERROR)
+    VALUE_REQUIRED = _message("value required", HTTPStatus.BAD_REQUEST)

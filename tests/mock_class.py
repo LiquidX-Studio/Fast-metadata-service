@@ -7,6 +7,9 @@ class S3Method(str, Enum):
     head_object = "head_object"
     put_object = "put_object"
 
+class AiofilesMethod(str, Enum):
+    read = "read"
+    write = "write"
 
 class MockAioboto3Session(AsyncMock):
     def __init__(self, method: str, *args, **kwargs):

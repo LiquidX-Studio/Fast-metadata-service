@@ -17,6 +17,7 @@ class S3Storage(StorageInterface):
     """This class is used to interact with AWS S3 bucket"""
 
     S3 = "s3"
+    bucket = Env.S3_BUCKET_NAME
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(self, logger: logging.Logger, config: dict, **kwargs):
@@ -46,13 +47,12 @@ class S3Storage(StorageInterface):
         """
 
         session = aioboto3.Session()
-        bucket = Env.S3_BUCKET_NAME.value
         async with session.client(self.S3,
                                   aws_access_key_id=self.access_key,
                                   aws_secret_access_key=self.secret_key) as s3:
             try:
-                self.logger.info("Load file %s from bucket %s", path, bucket)
-                file = await s3.get_object(Bucket=bucket, Key=path)
+                self.logger.info("Load file %s from bucket %s", path, self.bucket)
+                file = await s3.get_object(Bucket=self.bucket, Key=path)
                 if file is not None:
                     return await file["Body"].read(), HTTPStatus.OK
             except botocore.exceptions.ParamValidationError as err:
@@ -81,12 +81,11 @@ class S3Storage(StorageInterface):
         """
 
         session = aioboto3.Session()
-        bucket = Env.S3_BUCKET_NAME.value
 
         if not overwrite:
             response, status = await self.is_exists(path)
             if response:
-                self.logger.warning("Abort overwriting file %s since it exists in bucket %s", path, bucket)
+                self.logger.warning("Abort overwriting file %s since it exists in bucket %s", path, self.bucket)
             if status != HTTPStatus.NOT_FOUND:
                 return response, status
 
@@ -94,8 +93,8 @@ class S3Storage(StorageInterface):
                                   aws_access_key_id=self.access_key,
                                   aws_secret_access_key=self.secret_key) as s3:
             try:
-                self.logger.info("Save file %s to bucket %s", path, bucket)
-                await s3.put_object(Bucket=bucket, Key=path, Body=content)
+                self.logger.info("Save file %s to bucket %s", path, self.bucket)
+                await s3.put_object(Bucket=self.bucket, Key=path, Body=content)
                 return Response.OK
             except botocore.exceptions.ParamValidationError as err:
                 self.logger.error("Invalid parameter added when saving to S3 bucket. Error: %s", str(err))
@@ -121,19 +120,18 @@ class S3Storage(StorageInterface):
         """
 
         session = aioboto3.Session()
-        bucket = Env.S3_BUCKET_NAME.value
         async with session.client(self.S3,
                                   aws_access_key_id=self.access_key,
                                   aws_secret_access_key=self.secret_key) as s3:
             try:
-                self.logger.info("Check whether file %s exists in bucket %s", path, bucket)
-                await s3.head_object(Bucket=bucket, Key=path)
+                self.logger.info("Check whether file %s exists in bucket %s", path, self.bucket)
+                await s3.head_object(Bucket=self.bucket, Key=path)
                 return True, HTTPStatus.OK
             except botocore.exceptions.ParamValidationError as err:
                 self.logger.error("Invalid parameter added when accessing S3 bucket. Error: %s", str(err))
             except botocore.exceptions.ClientError as err:
                 if "error occurred (404)" in str(err):
-                    self.logger.warning("File %s in bucket %s not found. Error: %s", path, bucket, str(err))
+                    self.logger.warning("File %s in bucket %s not found. Error: %s", path, self.bucket, str(err))
                     return False, HTTPStatus.NOT_FOUND
                 self.logger.error("Failed to check file in S3 bucket. Error: %s", str(err))
             except Exception as err:

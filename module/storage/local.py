@@ -84,11 +84,14 @@ class LocalStorage(StorageInterface):
                 self.logger.warning("Abort overwriting file %s since it exists", path)
                 return Response.FILE_EXISTS
 
+            directory = os.path.dirname(path)
+            if not os.path.exists(directory):
+                self.logger.info("Creating directory %s", directory)
+                os.makedirs(directory)
+
             async with aiofiles.open(path, "wb") as file:
                 await file.write(content)
                 return Response.OK
-        except FileNotFoundError:
-            self.logger.error("Directory %s not found", os.path.dirname(path))
         except IsADirectoryError:
             self.logger.error("Path %s is a directory", path)
         except PermissionError as err:

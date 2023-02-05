@@ -2,12 +2,10 @@
 
 from fastapi import FastAPI
 
-from routers import metadata
+from routers import health, metadata, internal_metadata
 
 
 def router(app: FastAPI):
-    @app.get("/health")
-    async def healthcheck():
-        return "Ok"
-
+    app.include_router(health.router)
     app.include_router(metadata.router)
+    app.include_router(internal_metadata.router)
