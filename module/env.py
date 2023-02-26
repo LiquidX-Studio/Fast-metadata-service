@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     LOGGING_LEVEL: Optional[str]
     MAX_TOKEN_ID: conint(gt=0)
     METADATA_FOLDER: Optional[str]
+    PINATA_GATEWAY: Optional[str]
     PRODUCTION: Optional[Literal["true"]]
     S3_BUCKET_NAME: Optional[str]
     SECRET_KEY: str

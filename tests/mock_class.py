@@ -7,9 +7,6 @@ class S3Method(str, Enum):
     head_object = "head_object"
     put_object = "put_object"
 
-class AiofilesMethod(str, Enum):
-    read = "read"
-    write = "write"
 
 class MockAioboto3Session(AsyncMock):
     def __init__(self, method: str, *args, **kwargs):
@@ -53,3 +50,17 @@ class MockClient(AsyncMock):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
+
+
+class MockAioHTTP(AsyncMock):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.expected_return_value = kwargs.get("expected_return_value")
+
+    @property
+    def status(self):
+        return self.expected_return_value.status
+
+    async def read(self, *args, **kwargs):
+        return self.expected_return_value.message

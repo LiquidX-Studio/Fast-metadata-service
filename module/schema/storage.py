@@ -22,6 +22,7 @@ class StorageType(str, Enum):
 
     S3 = "s3"
     Local = "local"
+    Pinata = "pinata"
 
 
 class Configuration(BaseModel):

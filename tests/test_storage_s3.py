@@ -87,7 +87,17 @@ class TestStorageS3(unittest.TestCase):
         mock_boto3.return_value = MockAioboto3Session(S3Method.head_object, expected_return_value=True)
         exists, status = asyncio.run(self.storage.put("4.json", b"test", overwrite=False))
         self.assertTrue(exists)
-        self.assertEqual(status, HTTPStatus.OK)
+        self.assertEqual(status, HTTPStatus.CONFLICT)
+
+    @patch.object(aioboto3, "Session")
+    def test_failed_to_upload_file(self, mock_boto3):
+        error = botocore.exceptions.ClientError(
+            error_response={"Error": {"Code": "Unknown"}},
+            operation_name="test"
+        )
+        mock_boto3.return_value = MockAioboto3Session(S3Method.head_object, expected_side_effect=error)
+        res = asyncio.run(self.storage.put("4.json", b"test", overwrite=False))
+        self.assertEqual(res, Response.STORAGE_OPERATION_FAIL)
 
     @patch.object(aioboto3, "Session")
     def test_upload_new_file_and_not_overwrite(self, mock_boto3):

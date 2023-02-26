@@ -86,8 +86,10 @@ class S3Storage(StorageInterface):
             response, status = await self.is_exists(path)
             if response:
                 self.logger.warning("Abort overwriting file %s since it exists in bucket %s", path, self.bucket)
-            if status != HTTPStatus.NOT_FOUND:
+            if status != HTTPStatus.NOT_FOUND and status != HTTPStatus.OK:
                 return response, status
+            elif status == HTTPStatus.OK:
+                return Response.FILE_EXISTS
 
         async with session.client(self.S3,
                                   aws_access_key_id=self.access_key,
@@ -124,8 +126,8 @@ class S3Storage(StorageInterface):
                                   aws_access_key_id=self.access_key,
                                   aws_secret_access_key=self.secret_key) as s3:
             try:
-                self.logger.info("Check whether file %s exists in bucket %s", path, self.bucket)
                 await s3.head_object(Bucket=self.bucket, Key=path)
+                self.logger.info("File %s exists in bucket %s", path, self.bucket)
                 return True, HTTPStatus.OK
             except botocore.exceptions.ParamValidationError as err:
                 self.logger.error("Invalid parameter added when accessing S3 bucket. Error: %s", str(err))
