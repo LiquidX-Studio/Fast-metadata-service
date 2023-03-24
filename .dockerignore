@@ -1,0 +1,6 @@
+htmlcov
+README.md
+.idea
+__pycache__
+env
+*.env

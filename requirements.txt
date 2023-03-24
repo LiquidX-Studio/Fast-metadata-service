@@ -1,0 +1,6 @@
+PyJWT
+aioboto3==10.3.0
+aiofiles==22.1.0
+fastapi==0.89.1
+httpx==0.23.3
+uvicorn==0.20.0
