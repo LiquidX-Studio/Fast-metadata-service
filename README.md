@@ -6,6 +6,7 @@ to the client. Currently, the supported storages are:
 
 - AWS S3 bucket
 - Local storage
+- Pinata Storage
 
 The metadata file should be named based on the token ID of the metadata 
 (e.g. "1.json"). We can find the example in the `tests/test_file/metadata`
@@ -30,6 +31,7 @@ source env/bin/activate
 3. Run `pip install -r requirements.txt` to install dependencies
 4. Set the following environment variables
    - `MAX_TOKEN_ID`: The maximum token ID of metadata available
+   - `SECRET_KEY`: Secret key to validate JWT
    - `METADATA_FOLDER`: The folder containing metadata files, leave empty if it's stored in the root directory
    - `S3_BUCKET_NAME`: The AWS S3 bucket name that used to store metadata
    - `STORAGE_ACCESS_KEY`: The AWS access key to access S3 bucket
@@ -50,6 +52,34 @@ source env/bin/activate
 3. Run `pip install -r requirements.txt` to install dependencies
 4. Set the following environment variables
     - `MAX_TOKEN_ID`: The maximum token ID of metadata available
+    - `SECRET_KEY`: Secret key to validate JWT
     - `METADATA_FOLDER`: The folder containing metadata files, leave empty if it's stored in the root directory
     - `STORAGE_TYPE`: Set `local` if using local storage
 5. Run `python main.py` to start the server
+
+### Read metadata from Pinata storage
+
+1. Create directory to store metadata within the project directory and save the metadata files there
+2. Go to the project directory and create Python virtual environment
+
+```
+python3 -m venv env
+source env/bin/activate
+```
+
+3. Run `pip install -r requirements.txt` to install dependencies
+4. Set the following environment variables
+    - `MAX_TOKEN_ID`: The maximum token ID of metadata available
+    - `SECRET_KEY`: Secret key to validate JWT
+    - `STORAGE_ACCESS_KEY`: The Pinata access key
+    - `STORAGE_SECRET_KEY`: The Pinata secret key
+    - `STORAGE_TYPE`: Set `pinata` if using pinata storage
+5. Run `python main.py` to start the server
+
+## How To Test
+
+To run the test, run the following script
+
+```sh
+sh test.sh
+```
