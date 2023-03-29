@@ -19,6 +19,7 @@ class PinataStorage(StorageInterface):
 
     timeout = aiohttp.ClientTimeout(total=10)
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(self, logger: logging.Logger, config: dict, **kwargs):
         """Initialize Pinata Storage class
 

@@ -1,8 +1,10 @@
 import uuid
 
+import uvicorn
 from fastapi import FastAPI, Request, Response
 
 from module.constant import CORRELATION_ID
+from module.env import Env
 from routers.router import router
 
 app = FastAPI()
@@ -25,3 +27,6 @@ async def set_correlation_id(request: Request, call_next):
 
 
 router(app)
+
+if __name__ == "__main__":  # pragma: no cover
+    uvicorn.run(app, host="0.0.0.0", port=Env.PORT)

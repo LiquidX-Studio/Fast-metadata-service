@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     STORAGE_ACCESS_KEY: Optional[str] = ""
     STORAGE_SECRET_KEY: Optional[str] = ""
     STORAGE_TYPE: StorageType
+    PORT: Optional[int] = 3000
 
 
 Env = Settings()  # Import this variable to get the environment variable value
